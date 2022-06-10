@@ -45,7 +45,7 @@ Binaries
 | project ReportId, Timestamp, DeviceId, DeviceName, FolderPath, InitiatingProcessFolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine, SignatureState
 | order by Timestamp
 
-// Exfiltracion with rclone, megasync, stealbith (based on command-line)
+// Exfiltration with rclone, megasync, stealbith (based on command-line)
 // References: https://thedfirreport.com/2021/11/29/continuing-the-bazar-ransomware-story/
 //             https://www.cybereason.com/blog/research/threat-analysis-report-inside-the-lockbit-arsenal-the-stealbit-exfiltration-tool   
 //             https://redcanary.com/blog/rclone-mega-extortion/  
@@ -68,7 +68,7 @@ DeviceProcessEvents
 | project ReportId, Timestamp, DeviceId, DeviceName, AccountName, InitiatingProcessFileName, InitiatingProcessCommandLine, ProcessCommandLine
 | order by Timestamp
 
-//Connexions from rundll32.exe with no command line
+//Connections from rundll32.exe with no command line
 DeviceNetworkEvents
 | where InitiatingProcessFileName =~ "rundll32.exe"
 | where InitiatingProcessCommandLine has "rundll32.exe" and InitiatingProcessCommandLine !contains " " 
