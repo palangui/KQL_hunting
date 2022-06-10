@@ -1,0 +1,15 @@
+//Potential DLL Order Hijacking (exception will need to be added depending on the environment)
+let Binaries =
+DeviceImageLoadEvents
+| where InitiatingProcessFolderPath !contains "windows\\system32";
+let DLLfiles =
+Binaries
+| distinct SHA1
+| invoke FileProfile();
+Binaries
+| join kind=inner DLLfiles on SHA1
+| where FolderPath !contains "\\windows"
+| where SignatureState != "SignedValid"
+| where GlobalPrevalence < 60
+| project ReportId, Timestamp, DeviceId, DeviceName, FolderPath, FileName, InitiatingProcessFolderPath, InitiatingProcessCommandLine, SignatureState
+| order by Timestamp
