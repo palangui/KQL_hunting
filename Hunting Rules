@@ -13,3 +13,40 @@ Binaries
 | where GlobalPrevalence < 60
 | project ReportId, Timestamp, DeviceId, DeviceName, FolderPath, FileName, InitiatingProcessFolderPath, InitiatingProcessCommandLine, SignatureState
 | order by Timestamp
+
+// Exfiltracion with rclone, megasync, stealbith (based on command-line)
+// References: https://thedfirreport.com/2021/11/29/continuing-the-bazar-ransomware-story/
+//             https://www.cybereason.com/blog/research/threat-analysis-report-inside-the-lockbit-arsenal-the-stealbit-exfiltration-tool   
+//             https://redcanary.com/blog/rclone-mega-extortion/  
+let RCLONE = dynamic(['--ignore-existing','--multi-thread-streams', 'copy --max-age', 'config create remote']);
+let MEGASYNC = dynamic(["MEGAsync"]);
+let STEALBIT = dynamic(["-skipfolders","-skipfiles"]);  
+DeviceProcessEvents
+| where ProcessCommandLine has_any (RCLONE) or ProcessCommandLine has_any (STEALBIT)  or ProcessVersionInfoProductName has_any (MEGASYNC)
+| project ReportId, Timestamp, DeviceId, DeviceName, AccountName, InitiatingProcessFileName, InitiatingProcessCommandLine, ProcessCommandLine
+| order by Timestamp
+
+// Check persistence with anydesk, atera, splashtop
+// References: https://thedfirreport.com/2022/04/04/stolen-images-campaign-ends-in-conti-ransomware/
+//             https://s3.amazonaws.com/talos-intelligence-site/production/document_files/files/000/095/639/original/Conti_playbook_translated.pdf?1630583757
+let ANYDESK = dynamic(['--start-with-win --silent','--set-password']);
+let ATERA = dynamic(["agent-api.atera.com"]);
+let SPLASHTOP = dynamic(["splashtop.streamer"]);   
+DeviceProcessEvents
+| where ProcessCommandLine has_any (ANYDESK) or ProcessCommandLine has_any (ATERA)  or ProcessCommandLine has_any (SPLASHTOP)
+| project ReportId, Timestamp, DeviceId, DeviceName, AccountName, InitiatingProcessFileName, InitiatingProcessCommandLine, ProcessCommandLine
+| order by Timestamp
+
+//Connexions from rundll32.exe with no command line
+DeviceNetworkEvents
+| where InitiatingProcessFileName =~ "rundll32.exe"
+| where InitiatingProcessCommandLine has "rundll32.exe" and InitiatingProcessCommandLine !contains " " 
+and InitiatingProcessCommandLine != "" 
+| project ReportId, Timestamp, DeviceId, DeviceName, InitiatingProcessFolderPath, InitiatingProcessFileName, RemoteUrl, RemoteIP
+| order by Timestamp
+
+//Ngrok connections
+let domains = dynamic(["tunnel.us.ngrok.com", "tunnel.eu.ngrok.com", "tunnel.ap.ngrok.com", "tunnel.au.ngrok.com" ,"tunnel.sa.ngrok.com", "tunnel.jp.ngrok.com", "tunnel.in.ngrok.com", "*.ngrok.io"]);
+DeviceNetworkEvents
+| where RemoteUrl has_any(domains)
+| project ReportId, Timestamp, DeviceId, DeviceName, InitiatingProcessAccountUpn, InitiatingProcessParentFileName, InitiatingProcessFileName, InitiatingProcessCommandLine, RemoteUrl
