@@ -1,5 +1,5 @@
 # KQL_hunting
-Here I will point out some queries of interest that have helped me to identify interesting things (malware / red-teams) with Defender
+Repository of custom-made queries that have been useful to detect interesting things (malware / red-teams) from Dendender:
 
 - Potential DLL Order Hijacking
 - Suspicious DLL loaded in the address space of Rundll32
