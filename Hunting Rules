@@ -31,6 +31,20 @@ Binaries
 | project ReportId, Timestamp, DeviceId, DeviceName, FolderPath, FileName, InitiatingProcessFolderPath, InitiatingProcessCommandLine, SignatureState
 | order by Timestamp
 
+//Suspicious DLL loaded in the address space of Rundll32. Tune the GlobalPrevalence value or event the FolderPath of the DLL (i.e: contains "\\Users\\")
+DeviceImageLoadEvents
+| where InitiatingProcessFileName contains "rundll32";
+let DLLfiles =
+Binaries
+| distinct SHA1
+| invoke FileProfile();
+Binaries
+| join kind=inner DLLfiles on SHA1
+| where SignatureState != "SignedValid"
+| where GlobalPrevalence < 100
+| project ReportId, Timestamp, DeviceId, DeviceName, FolderPath, InitiatingProcessFolderPath, InitiatingProcessFileName, InitiatingProcessCommandLine, SignatureState
+| order by Timestamp
+
 // Exfiltracion with rclone, megasync, stealbith (based on command-line)
 // References: https://thedfirreport.com/2021/11/29/continuing-the-bazar-ransomware-story/
 //             https://www.cybereason.com/blog/research/threat-analysis-report-inside-the-lockbit-arsenal-the-stealbit-exfiltration-tool   
